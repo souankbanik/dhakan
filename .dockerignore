@@ -1,0 +1,40 @@
+# Dependency and build directories
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git repository metadata
+.git/
+.gitignore
+
+# Environment secrets and local overrides
+.env
+.env.*
+!.env.example
+
+# Test files and test runners
+test/
+tests/
+*.test.js
+
+# Local database files and WAL/SHM artifacts
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+database/*.sqlite*
+database/*.db*
+
+# Docker and deployment config
+Dockerfile
+.dockerignore
+fly.toml
+
+# IDE and agent internal artifacts
+.system_generated/
+.gemini/
+.vscode/
+.idea/
