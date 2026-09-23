@@ -15,6 +15,11 @@ const server = http.createServer((req, res) => {
       JSON.stringify({
         status: 'online',
         service: 'DHAKAN (Builder OS)',
+        discord: {
+          tokenConfigured: Boolean(config.token),
+          loggedIn: Boolean(client.user),
+          botTag: client.user ? client.user.tag : null,
+        },
         timestamp: new Date().toISOString(),
       })
     );

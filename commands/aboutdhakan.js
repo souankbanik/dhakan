@@ -13,6 +13,8 @@ module.exports = {
     .setDescription('Explore DHAKAN — Community & Builder OS overview and command directory.'),
 
   async execute(interaction) {
+    await interaction.deferReply();
+
     const aiNewsChannelId = config.channels?.aiNews || '1551629280604332053';
     const generalChannelId = config.channels?.general || '1547976917125177417';
 
@@ -56,7 +58,7 @@ module.exports = {
         .setStyle(ButtonStyle.Secondary)
     );
 
-    return interaction.reply({ embeds: [mainEmbed], components: [row] });
+    return interaction.editReply({ embeds: [mainEmbed], components: [row] });
   },
 
   async handleAboutButtons(interaction) {
