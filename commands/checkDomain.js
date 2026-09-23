@@ -13,17 +13,16 @@ module.exports = {
     ),
 
   async execute(interaction) {
+    await interaction.deferReply();
+
     const rawDomain = interaction.options.getString('domain', true);
     const domain = cleanDomainName(rawDomain);
 
     if (!domain || !domain.includes('.')) {
-      return interaction.reply({
+      return interaction.editReply({
         content: '❌ Please provide a valid domain name with a TLD (e.g., `buildwithai.com`).',
-        ephemeral: true,
       });
     }
-
-    await interaction.deferReply();
 
     const result = await checkDomain(domain);
 

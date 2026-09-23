@@ -11,9 +11,11 @@ module.exports = {
     try {
       // 1. Slash Commands
       if (interaction.isChatInputCommand()) {
+        const start = Date.now();
+        console.log(`[INTERACTION] /${interaction.commandName} triggered by ${interaction.user.tag} (${interaction.user.id}) in #${interaction.channel?.name || interaction.channelId}`);
         const command = interaction.client.commands.get(interaction.commandName);
         if (!command) {
-          console.warn(`[WARN] No command matching '${interaction.commandName}' was found.`);
+          console.warn(`[WARN] No command matching '${interaction.commandName}' was found in registry.`);
           await interaction.reply({
             content: `❌ Command \`/${interaction.commandName}\` was not recognized or is updating.`,
             ephemeral: true,
@@ -21,6 +23,7 @@ module.exports = {
           return;
         }
         await command.execute(interaction);
+        console.log(`[INTERACTION] /${interaction.commandName} successfully handled in ${Date.now() - start}ms`);
         return;
       }
 

@@ -23,6 +23,8 @@ const server = http.createServer((req, res) => {
           tokenConfigured: Boolean(config.token),
           loggedIn: Boolean(client.user),
           botTag: client.user ? client.user.tag : null,
+          wsStatus: client.ws ? client.ws.status : null,
+          wsPing: client.ws ? Math.round(client.ws.ping) : null,
         },
         timestamp: new Date().toISOString(),
       })
@@ -94,61 +96,64 @@ for (const file of eventFiles) {
 }
 
 // Register Commands & Purge Duplicate Guild Registrations on Startup
-client.once(Events.ClientReady, async () => {
+client.once(Events.ClientReady, () => {
   console.log(`[GOKU OS] Bot logged in successfully as ${client.user.tag}`);
-  const token = process.env.DISCORD_TOKEN || config.token;
-  const clientId = process.env.CLIENT_ID || config.clientId;
+  console.log(`[GOKU OS] System online as ${client.user.tag}. Ready to process interactions.`);
 
-  if (!token || !clientId) {
-    console.warn('[DEPLOY WARN] Skipping slash command sync: DISCORD_TOKEN or CLIENT_ID is missing.');
-  } else {
-    const rest = new REST({ version: '10' }).setToken(token);
+  // Run startup maintenance and news dispatch in the background so interaction handling is instant
+  setImmediate(async () => {
+    const token = process.env.DISCORD_TOKEN || config.token;
+    const clientId = process.env.CLIENT_ID || config.clientId;
 
-    try {
-      // Step 1: Wipe duplicate guild-scoped commands in every joined guild
-      console.log('[DEPLOY] Purging redundant guild-level slash commands...');
-      for (const [guildId, guild] of client.guilds.cache) {
-        try {
-          await rest.put(
-            Routes.applicationGuildCommands(clientId, guildId),
-            { body: [] }
-          );
-          console.log(`[DEPLOY] Cleared guild commands for: ${guild.name} (${guildId})`);
-        } catch (guildErr) {
-          console.warn(`[DEPLOY WARN] Failed to clear guild commands for ${guild.name} (${guildId}):`, guildErr.message);
+    if (!token || !clientId) {
+      console.warn('[DEPLOY WARN] Skipping slash command sync: DISCORD_TOKEN or CLIENT_ID is missing.');
+    } else {
+      const rest = new REST({ version: '10' }).setToken(token);
+
+      try {
+        // Step 1: Wipe duplicate guild-scoped commands in every joined guild
+        console.log('[DEPLOY] Purging redundant guild-level slash commands...');
+        for (const [guildId, guild] of client.guilds.cache) {
+          try {
+            await rest.put(
+              Routes.applicationGuildCommands(clientId, guildId),
+              { body: [] }
+            );
+            console.log(`[DEPLOY] Cleared guild commands for: ${guild.name} (${guildId})`);
+          } catch (guildErr) {
+            console.warn(`[DEPLOY WARN] Failed to clear guild commands for ${guild.name} (${guildId}):`, guildErr.message);
+          }
         }
+
+        // Step 2: Ensure single global registry contains the current commands
+        console.log(`[DEPLOY] Registering ${commands.length} application commands globally...`);
+        await rest.put(
+          Routes.applicationCommands(clientId),
+          { body: commands }
+        );
+        console.log('[DEPLOY] Global registration complete. Duplicates resolved.');
+      } catch (error) {
+        console.error('[DEPLOY ERROR] Failed to clean/deploy commands:', error);
       }
-
-      // Step 2: Ensure single global registry contains the current commands
-      console.log(`[DEPLOY] Registering ${commands.length} application commands globally...`);
-      await rest.put(
-        Routes.applicationCommands(clientId),
-        { body: commands }
-      );
-      console.log('[DEPLOY] Global registration complete. Duplicates resolved.');
-    } catch (error) {
-      console.error('[DEPLOY ERROR] Failed to clean/deploy commands:', error);
     }
-  }
 
-  console.log(`[GOKU OS] System online as ${client.user.tag}.`);
-
-  // 1. Instant test dispatch on boot
-  try {
-    console.log('[AI RADAR] Triggering startup news verification...');
-    await fetchAndDispatchLatestNews(client);
-  } catch (err) {
-    console.error('[AI RADAR STARTUP ERROR]:', err);
-  }
-
-  // 2. Schedule recurring checks (every 30 minutes)
-  setInterval(async () => {
+    // 1. Instant test dispatch on boot
     try {
+      console.log('[AI RADAR] Triggering startup news verification...');
       await fetchAndDispatchLatestNews(client);
     } catch (err) {
-      console.error('[AI RADAR LOOP ERROR]:', err);
+      console.error('[AI RADAR STARTUP ERROR]:', err);
     }
-  }, 30 * 60 * 1000);
+
+    // 2. Schedule recurring checks (every 30 minutes)
+    setInterval(async () => {
+      try {
+        await fetchAndDispatchLatestNews(client);
+      } catch (err) {
+        console.error('[AI RADAR LOOP ERROR]:', err);
+      }
+    }, 30 * 60 * 1000);
+  });
 });
 
 // Clean any redundant guild commands if joining a server
