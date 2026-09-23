@@ -1,7 +1,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, Partials, REST, Routes, Events } = require('discord.js');
 const config = require('./config');
 
 console.log('[GOKU OS] Starting up...');
@@ -60,28 +60,22 @@ const client = new Client({
 client.commands = new Collection();
 client.db = db;
 
-// Load commands dynamically (recursive scan)
+// Load command files and prepare JSON payload for instant deployment
+const commands = [];
 const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
 
-function loadCommands(dir) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      loadCommands(fullPath);
-    } else if (entry.isFile() && entry.name.endsWith('.js')) {
-      const command = require(fullPath);
-      if ('data' in command && 'execute' in command) {
-        client.commands.set(command.data.name, command);
-        console.log(`[GOKU OS] Registered command: /${command.data.name}`);
-      } else {
-        console.warn(`[WARN] The command at ${fullPath} is missing required 'data' or 'execute' properties.`);
-      }
-    }
+for (const file of commandFiles) {
+  const filePath = path.join(commandsPath, file);
+  const command = require(filePath);
+  if ('data' in command && 'execute' in command) {
+    client.commands.set(command.data.name, command);
+    commands.push(command.data.toJSON());
+    console.log(`[LOADED] Command /${command.data.name}`);
+  } else {
+    console.warn(`[WARN] The command at ${filePath} is missing "data" or "execute".`);
   }
 }
-
-loadCommands(commandsPath);
 
 // Load events dynamically from events directory
 const eventsPath = path.join(__dirname, 'events');
@@ -97,6 +91,62 @@ for (const file of eventFiles) {
   }
   console.log(`[GOKU OS] Registered event: ${event.name}`);
 }
+
+// Register Commands Instantly to All Connected Servers on Startup
+client.once(Events.ClientReady, async () => {
+  const token = process.env.DISCORD_TOKEN || config.token;
+  const clientId = process.env.CLIENT_ID || config.clientId;
+
+  if (!token || !clientId) {
+    console.warn('[DEPLOY WARN] Skipping automatic slash command sync: DISCORD_TOKEN or CLIENT_ID is missing.');
+    return;
+  }
+
+  const rest = new REST({ version: '10' }).setToken(token);
+
+  try {
+    console.log(`[DEPLOY] Pushing ${commands.length} slash commands to all active servers...`);
+    for (const [guildId, guild] of client.guilds.cache) {
+      try {
+        await rest.put(
+          Routes.applicationGuildCommands(clientId, guildId),
+          { body: commands }
+        );
+        console.log(`[DEPLOY] Successfully synced commands for guild: ${guild.name} (${guildId})`);
+      } catch (guildErr) {
+        console.warn(`[DEPLOY WARN] Failed to sync commands for guild ${guild.name} (${guildId}):`, guildErr.message);
+      }
+    }
+
+    // Also push globally for future servers
+    await rest.put(
+      Routes.applicationCommands(clientId),
+      { body: commands }
+    );
+    console.log('[DEPLOY] Global registration completed.');
+  } catch (error) {
+    console.error('[DEPLOY ERROR] Failed to register slash commands:', error);
+  }
+});
+
+// Automatic 0-second sync when joining a new server
+client.on(Events.GuildCreate, async (guild) => {
+  console.log(`[GOKU OS] Joined new server: ${guild.name} (${guild.id}). Instant syncing slash commands...`);
+  const token = process.env.DISCORD_TOKEN || config.token;
+  const clientId = process.env.CLIENT_ID || config.clientId;
+  if (!token || !clientId) return;
+
+  try {
+    const rest = new REST({ version: '10' }).setToken(token);
+    await rest.put(
+      Routes.applicationGuildCommands(clientId, guild.id),
+      { body: commands }
+    );
+    console.log(`[DEPLOY] Successfully synced commands for new server: ${guild.name}`);
+  } catch (err) {
+    console.error(`[DEPLOY ERROR] Failed to sync commands for new server ${guild.name}:`, err.message);
+  }
+});
 
 // Global process error handlers for production stability
 process.on('unhandledRejection', (reason, promise) => {

@@ -14,6 +14,10 @@ module.exports = {
         const command = interaction.client.commands.get(interaction.commandName);
         if (!command) {
           console.warn(`[WARN] No command matching '${interaction.commandName}' was found.`);
+          await interaction.reply({
+            content: `❌ Command \`/${interaction.commandName}\` was not recognized or is updating.`,
+            ephemeral: true,
+          }).catch(() => null);
           return;
         }
         await command.execute(interaction);
