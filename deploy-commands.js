@@ -4,6 +4,12 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v10');
 const config = require('./config');
 
+if (!config.token || !config.clientId || !config.guildId) {
+  console.warn('[DEPLOY WARN] Skipping slash command deployment: DISCORD_TOKEN, CLIENT_ID, or GUILD_ID is missing.');
+  console.warn('[DEPLOY WARN] If running on Render, please configure your environment variables in the Render Dashboard.');
+  process.exit(0);
+}
+
 const commands = [];
 const commandsPath = path.join(__dirname, 'commands');
 
@@ -50,7 +56,7 @@ const rest = new REST({ version: '10' }).setToken(config.token);
     }
   } catch (error) {
     console.error('[DEPLOY ERROR] Failed to register application commands:', error);
-    process.exit(1);
+    // Don't kill container startup in production if rate-limited
+    process.exit(0);
   }
 })();
-
