@@ -1,5 +1,3 @@
-const db = require('../database/db');
-
 // In-memory debounce cache: key -> timestamp (ms)
 const debounceCache = new Map();
 
@@ -81,57 +79,13 @@ function checkAccountAge(user, minDays = 7) {
 }
 
 /**
- * Enforces rate limit of 1 submission per user every `minDays` (default: 7 days).
- * @param {string} userId
- * @param {number} minDays
- * @returns {{ allowed: boolean, remainingHours: number }}
- */
-function checkSubmissionRateLimit(userId, minDays = 7) {
-  const windowSeconds = minDays * 24 * 60 * 60;
-  const now = Math.floor(Date.now() / 1000);
-
-  let lastTimestamp = 0;
-
-  try {
-    const userRow = db.prepare('SELECT lastSubmissionTimestamp FROM users WHERE userId = ?').get(userId);
-    if (userRow?.lastSubmissionTimestamp) {
-      lastTimestamp = userRow.lastSubmissionTimestamp;
-    }
-  } catch (err) {
-    console.error('[ANTI-CHEAT] Error querying user submission timestamp:', err);
-  }
-
-  if (!lastTimestamp) {
-    try {
-      const projRow = db.prepare('SELECT createdAt FROM projects WHERE userId = ? ORDER BY createdAt DESC LIMIT 1').get(userId);
-      if (projRow?.createdAt) {
-        lastTimestamp = projRow.createdAt;
-      }
-    } catch (err) {
-      console.error('[ANTI-CHEAT] Error querying projects for submission timestamp:', err);
-    }
-  }
-
-  if (lastTimestamp > 0) {
-    const elapsedSeconds = now - lastTimestamp;
-    if (elapsedSeconds < windowSeconds) {
-      const remainingSeconds = windowSeconds - elapsedSeconds;
-      const remainingHours = Math.ceil(remainingSeconds / 3600);
-      return { allowed: false, remainingHours };
-    }
-  }
-
-  return { allowed: true, remainingHours: 0 };
-}
-
-/**
  * Checks in-memory debounce to prevent button mashing or duplicate rapid clicks.
  * @param {string} userId
  * @param {string} actionKey
  * @param {number} windowMs
  * @returns {boolean} True if interaction is allowed; false if debounced/rate limited
  */
-function checkButtonDebounce(userId, actionKey = 'default', windowMs = 2000) {
+function checkButtonDebounce(userId, actionKey = 'default', windowMs = 1500) {
   const key = `${userId}:${actionKey}`;
   const now = Date.now();
   const lastTime = debounceCache.get(key) || 0;
@@ -152,56 +106,6 @@ function clearDebounceCache() {
 }
 
 /**
- * Checks if a project with the same normalized URL or normalized Title already exists.
- * @param {string} rawTitle
- * @param {string} rawUrl
- * @param {number|null} excludeProjectId
- * @returns {boolean} True if duplicate exists
- */
-function checkDuplicateProject(rawTitle, rawUrl, excludeProjectId = null) {
-  const normUrl = normalizeUrl(rawUrl);
-  const normTitle = normalizeTitle(rawTitle);
-
-  try {
-    let query = `
-      SELECT id FROM projects 
-      WHERE (
-        (normalizedUrl = ? AND normalizedUrl != '') OR 
-        (normalizedTitle = ? AND normalizedTitle != '')
-      )
-    `;
-    const params = [normUrl, normTitle];
-
-    if (excludeProjectId) {
-      query += ' AND id != ?';
-      params.push(excludeProjectId);
-    }
-
-    const match = db.prepare(query).get(...params);
-    if (match) return true;
-
-    // Check project_showcases table as well
-    let showcaseQuery = `
-      SELECT id FROM project_showcases 
-      WHERE (
-        (normalizedUrl = ? AND normalizedUrl != '') OR 
-        (normalizedTitle = ? AND normalizedTitle != '')
-      )
-    `;
-    const scParams = [normUrl, normTitle];
-    if (excludeProjectId) {
-      showcaseQuery += ' AND id != ?';
-      scParams.push(excludeProjectId);
-    }
-    const scMatch = db.prepare(showcaseQuery).get(...scParams);
-    return !!scMatch;
-  } catch (err) {
-    console.error('[ANTI-CHEAT] Error checking duplicate project:', err);
-    return false;
-  }
-}
-
-/**
  * Checks if a vote is an author self-vote.
  * @param {string} projectAuthorId
  * @param {string} voterId
@@ -215,9 +119,7 @@ module.exports = {
   normalizeUrl,
   normalizeTitle,
   checkAccountAge,
-  checkSubmissionRateLimit,
   checkButtonDebounce,
   clearDebounceCache,
-  checkDuplicateProject,
   isSelfVote,
 };

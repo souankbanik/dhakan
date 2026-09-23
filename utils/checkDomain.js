@@ -60,7 +60,7 @@ async function checkDomain(rawDomain, options = {}) {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const url = `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=A`;
+    const url = `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=NS`;
     const response = await fetchFn(url, {
       headers: {
         Accept: 'application/dns-json',

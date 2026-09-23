@@ -1,27 +1,47 @@
+const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js');
 const config = require('./config');
+
+// Define port provided by Render's environment, default to 3000 locally
+const PORT = process.env.PORT || 3000;
+
+// Create lightweight HTTP server for Render port binding and UptimeRobot pings
+const server = http.createServer((req, res) => {
+  if (req.url === '/health' || req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        status: 'online',
+        service: 'DHAKAN (Builder OS)',
+        timestamp: new Date().toISOString(),
+      })
+    );
+  } else {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not Found');
+  }
+});
+
+server.on('error', (err) => {
+  console.error('[HealthCheck] Server error:', err.message);
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`[HealthCheck] Web server active and listening on port ${PORT}`);
+});
 
 // Ensure database schema is initialized
 const { initDatabase } = require('./database/init');
 const db = require('./database/db');
 initDatabase();
 
-// Instantiate Discord client with standard intents for guilds, messages, and voice
+// Instantiate Discord client with standard intents for guilds and messages
 const baseIntents = [
   GatewayIntentBits.Guilds,
   GatewayIntentBits.GuildMessages,
-  GatewayIntentBits.GuildVoiceStates,
 ];
-
-// Privileged Gateway Intents (MessageContent, GuildMembers) require toggles in Discord Developer Portal
-if (process.env.ENABLE_MESSAGE_CONTENT === 'true') {
-  baseIntents.push(GatewayIntentBits.MessageContent);
-}
-if (process.env.ENABLE_GUILD_MEMBERS === 'true') {
-  baseIntents.push(GatewayIntentBits.GuildMembers);
-}
 
 const client = new Client({
   intents: baseIntents,
@@ -32,30 +52,32 @@ const client = new Client({
 client.commands = new Collection();
 client.db = db;
 
-// Load commands dynamically from categorized subdirectories
+// Load commands dynamically (recursive scan)
 const commandsPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(commandsPath);
 
-for (const folder of commandFolders) {
-  const folderPath = path.join(commandsPath, folder);
-  if (!fs.statSync(folderPath).isDirectory()) continue;
-
-  const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
-  for (const file of commandFiles) {
-    const filePath = path.join(folderPath, file);
-    const command = require(filePath);
-    if ('data' in command && 'execute' in command) {
-      client.commands.set(command.data.name, command);
-      console.log(`[INIT] Registered command: /${command.data.name} (${folder})`);
-    } else {
-      console.warn(`[WARN] The command at ${filePath} is missing required 'data' or 'execute' properties.`);
+function loadCommands(dir) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      loadCommands(fullPath);
+    } else if (entry.isFile() && entry.name.endsWith('.js')) {
+      const command = require(fullPath);
+      if ('data' in command && 'execute' in command) {
+        client.commands.set(command.data.name, command);
+        console.log(`[INIT] Registered command: /${command.data.name}`);
+      } else {
+        console.warn(`[WARN] The command at ${fullPath} is missing required 'data' or 'execute' properties.`);
+      }
     }
   }
 }
 
+loadCommands(commandsPath);
+
 // Load events dynamically from events directory
 const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
 
 for (const file of eventFiles) {
   const filePath = path.join(eventsPath, file);
@@ -81,10 +103,14 @@ process.on('uncaughtException', (error) => {
 const shutdown = () => {
   console.log('\n[SHUTDOWN] Gracefully closing connections...');
   try {
+    if (server && server.listening) {
+      server.close();
+      console.log('[SHUTDOWN] HTTP server closed.');
+    }
     db.close();
     console.log('[SHUTDOWN] Database connection closed.');
   } catch (err) {
-    console.error('[SHUTDOWN ERROR] Error closing database:', err);
+    console.error('[SHUTDOWN ERROR] Error during shutdown:', err);
   }
 
   client.destroy();
@@ -97,7 +123,7 @@ process.on('SIGTERM', shutdown);
 
 // Bot login
 if (config.token) {
-  client.login(config.token).catch(err => {
+  client.login(config.token).catch((err) => {
     console.error('[FATAL] Failed to login to Discord:', err);
   });
 } else {
