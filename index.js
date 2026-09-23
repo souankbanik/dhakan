@@ -63,61 +63,79 @@ const client = new Client({
 client.commands = new Collection();
 client.db = db;
 
-// Load command files and prepare JSON payload for instant deployment
+// 2. Initialize Command Collection & Command Definitions for Global Deployment
 const commands = [];
 const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
 
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = require(filePath);
-  if ('data' in command && 'execute' in command) {
-    client.commands.set(command.data.name, command);
-    commands.push(command.data.toJSON());
-    console.log(`[LOADED] Command /${command.data.name}`);
-  } else {
-    console.warn(`[WARN] The command at ${filePath} is missing "data" or "execute".`);
+// 3. Dynamically Load Command Files
+if (fs.existsSync(commandsPath)) {
+  const commandFiles = fs.readdirSync(commandsPath).filter((file) => file.endsWith('.js'));
+
+  for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    // Clear require cache to guarantee latest changes are loaded
+    delete require.cache[require.resolve(filePath)];
+    const command = require(filePath);
+
+    if ('data' in command && 'execute' in command) {
+      client.commands.set(command.data.name, command);
+      commands.push(command.data.toJSON());
+      console.log(`[BOOT LOADER] Registered /${command.data.name} from ${file}`);
+    } else {
+      console.warn(`[BOOT WARNING] The command at ${file} is missing required "data" or "execute" properties.`);
+    }
   }
+} else {
+  console.error(`[BOOT ERROR] Commands directory not found at: ${commandsPath}`);
 }
 
 // Load events dynamically from events directory
 const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
+if (fs.existsSync(eventsPath)) {
+  const eventFiles = fs.readdirSync(eventsPath).filter((file) => file.endsWith('.js'));
 
-for (const file of eventFiles) {
-  const filePath = path.join(eventsPath, file);
-  const event = require(filePath);
-  if (event.once) {
-    client.once(event.name, (...args) => event.execute(...args));
-  } else {
-    client.on(event.name, (...args) => event.execute(...args));
+  for (const file of eventFiles) {
+    const filePath = path.join(eventsPath, file);
+    const event = require(filePath);
+    if (event.once) {
+      client.once(event.name, (...args) => event.execute(...args));
+    } else {
+      client.on(event.name, (...args) => event.execute(...args));
+    }
+    console.log(`[GOKU OS] Registered event: ${event.name}`);
   }
-  console.log(`[GOKU OS] Registered event: ${event.name}`);
 }
 
-// Hardened Interaction Dispatcher
+// 4. Interaction Gateway Listener
 client.on('interactionCreate', async (interaction) => {
+  // Only handle Chat Input (slash) commands
   if (interaction.isChatInputCommand()) {
+    console.log(`[INTERACTION RECEIVED] /${interaction.commandName} invoked by ${interaction.user.tag} in channel ${interaction.channelId}`);
+
     const command = client.commands.get(interaction.commandName);
+
     if (!command) {
-      console.error(`[INTERACTION ERROR] No handler found for /${interaction.commandName}`);
-      return;
+      console.error(`[INTERACTION MISMATCH] No matching command file found in client.commands for /${interaction.commandName}`);
+      return interaction.reply({
+        content: 'This command is not recognized or is temporarily unavailable.',
+        ephemeral: true,
+      }).catch(() => {});
     }
 
     try {
       await command.execute(interaction);
     } catch (error) {
-      console.error(`[EXECUTION ERROR] Exception running /${interaction.commandName}:`, error);
+      console.error(`[EXECUTION CRASH] Error executing /${interaction.commandName}:`, error);
 
-      const errorMessage = {
-        content: 'There was an error while executing this command.',
+      const errorResponse = {
+        content: 'An unexpected internal error occurred while executing this command.',
         ephemeral: true,
       };
 
       if (interaction.deferred || interaction.replied) {
-        await interaction.followUp(errorMessage).catch(() => {});
+        await interaction.followUp(errorResponse).catch((err) => console.error('[FOLLOWUP FAILED]:', err));
       } else {
-        await interaction.reply(errorMessage).catch(() => {});
+        await interaction.reply(errorResponse).catch((err) => console.error('[REPLY FAILED]:', err));
       }
     }
     return;
@@ -155,8 +173,8 @@ client.on('interactionCreate', async (interaction) => {
         return;
       }
     }
-  } catch (error) {
-    console.error('[INTERACTION ERROR] Component interaction error:', error);
+  } catch (componentError) {
+    console.error('[INTERACTION ERROR] Component interaction error:', componentError);
   }
 });
 

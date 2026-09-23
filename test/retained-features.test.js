@@ -143,7 +143,7 @@ console.log('🧪 Running GOKU Streamlined Architecture Test Suite (Core Utility
 // Check 6: /ai-news Command Structure
 // ==============================================================================
 {
-  const aiNewsCmd = require('../commands/aiNews');
+  const aiNewsCmd = require('../commands/ai-news');
   assert.strictEqual(aiNewsCmd.data.name, 'ai-news');
   assert.ok(typeof aiNewsCmd.execute === 'function');
   assert.strictEqual(aiNewsCmd.data.options.length, 1);
