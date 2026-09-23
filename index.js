@@ -93,40 +93,42 @@ for (const file of eventFiles) {
   console.log(`[GOKU OS] Registered event: ${event.name}`);
 }
 
-// Register Commands Instantly to All Connected Servers on Startup
+// Register Commands & Purge Duplicate Guild Registrations on Startup
 client.once(Events.ClientReady, async () => {
+  console.log(`[GOKU OS] Bot logged in successfully as ${client.user.tag}`);
   const token = process.env.DISCORD_TOKEN || config.token;
   const clientId = process.env.CLIENT_ID || config.clientId;
 
   if (!token || !clientId) {
-    console.warn('[DEPLOY WARN] Skipping automatic slash command sync: DISCORD_TOKEN or CLIENT_ID is missing.');
-    return;
-  }
+    console.warn('[DEPLOY WARN] Skipping slash command sync: DISCORD_TOKEN or CLIENT_ID is missing.');
+  } else {
+    const rest = new REST({ version: '10' }).setToken(token);
 
-  const rest = new REST({ version: '10' }).setToken(token);
-
-  try {
-    console.log(`[DEPLOY] Pushing ${commands.length} slash commands to all active servers...`);
-    for (const [guildId, guild] of client.guilds.cache) {
-      try {
-        await rest.put(
-          Routes.applicationGuildCommands(clientId, guildId),
-          { body: commands }
-        );
-        console.log(`[DEPLOY] Successfully synced commands for guild: ${guild.name} (${guildId})`);
-      } catch (guildErr) {
-        console.warn(`[DEPLOY WARN] Failed to sync commands for guild ${guild.name} (${guildId}):`, guildErr.message);
+    try {
+      // Step 1: Wipe duplicate guild-scoped commands in every joined guild
+      console.log('[DEPLOY] Purging redundant guild-level slash commands...');
+      for (const [guildId, guild] of client.guilds.cache) {
+        try {
+          await rest.put(
+            Routes.applicationGuildCommands(clientId, guildId),
+            { body: [] }
+          );
+          console.log(`[DEPLOY] Cleared guild commands for: ${guild.name} (${guildId})`);
+        } catch (guildErr) {
+          console.warn(`[DEPLOY WARN] Failed to clear guild commands for ${guild.name} (${guildId}):`, guildErr.message);
+        }
       }
-    }
 
-    // Also push globally for future servers
-    await rest.put(
-      Routes.applicationCommands(clientId),
-      { body: commands }
-    );
-    console.log('[DEPLOY] Global registration completed.');
-  } catch (error) {
-    console.error('[DEPLOY ERROR] Failed to register slash commands:', error);
+      // Step 2: Ensure single global registry contains the current commands
+      console.log(`[DEPLOY] Registering ${commands.length} application commands globally...`);
+      await rest.put(
+        Routes.applicationCommands(clientId),
+        { body: commands }
+      );
+      console.log('[DEPLOY] Global registration complete. Duplicates resolved.');
+    } catch (error) {
+      console.error('[DEPLOY ERROR] Failed to clean/deploy commands:', error);
+    }
   }
 
   console.log(`[GOKU OS] System online as ${client.user.tag}.`);
@@ -149,9 +151,9 @@ client.once(Events.ClientReady, async () => {
   }, 30 * 60 * 1000);
 });
 
-// Automatic 0-second sync when joining a new server
+// Clean any redundant guild commands if joining a server
 client.on(Events.GuildCreate, async (guild) => {
-  console.log(`[GOKU OS] Joined new server: ${guild.name} (${guild.id}). Instant syncing slash commands...`);
+  console.log(`[GOKU OS] Joined new server: ${guild.name} (${guild.id}). Ensuring clean global slash commands...`);
   const token = process.env.DISCORD_TOKEN || config.token;
   const clientId = process.env.CLIENT_ID || config.clientId;
   if (!token || !clientId) return;
@@ -160,11 +162,11 @@ client.on(Events.GuildCreate, async (guild) => {
     const rest = new REST({ version: '10' }).setToken(token);
     await rest.put(
       Routes.applicationGuildCommands(clientId, guild.id),
-      { body: commands }
+      { body: [] }
     );
-    console.log(`[DEPLOY] Successfully synced commands for new server: ${guild.name}`);
+    console.log(`[DEPLOY] Verified clean commands for new server: ${guild.name}`);
   } catch (err) {
-    console.error(`[DEPLOY ERROR] Failed to sync commands for new server ${guild.name}:`, err.message);
+    console.error(`[DEPLOY ERROR] Failed to clear guild commands for new server ${guild.name}:`, err.message);
   }
 });
 
