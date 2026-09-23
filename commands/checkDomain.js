@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { checkDomain, cleanDomainName } = require('../utils/checkDomain');
-const config = require('../config');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -14,14 +13,6 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    const botCommandsId = config.channels.botCommands;
-    if (botCommandsId && interaction.channelId !== botCommandsId) {
-      return interaction.reply({
-        content: `❌ This command can only be used in <#${botCommandsId}>.`,
-        ephemeral: true,
-      });
-    }
-
     const rawDomain = interaction.options.getString('domain', true);
     const domain = cleanDomainName(rawDomain);
 

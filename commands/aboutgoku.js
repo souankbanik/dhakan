@@ -15,7 +15,10 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply();
 
-    const aiNewsChannelId = config.channels?.aiNews || '1551629280604332053';
+    const targetChannel =
+      interaction.guild?.channels?.cache?.find((c) => c.isTextBased() && c.name === 'ai-news') ||
+      (config.channels?.aiNews ? interaction.client.channels.cache.get(config.channels.aiNews) : null);
+    const aiNewsChannelText = targetChannel ? `<#${targetChannel.id}>` : (config.channels?.aiNews ? `<#${config.channels.aiNews}>` : '`#ai-news`');
 
     const mainEmbed = new EmbedBuilder()
       .setTitle('⚡ GOKU (Utility OS)')
@@ -27,7 +30,7 @@ module.exports = {
         {
           name: '📡 AI News Radar',
           value:
-            `Live curated updates across Hugging Face, research preprints, and AI releases in <#${aiNewsChannelId}>. Trigger scans or browse top drops anytime via \`/ai-news\`.`,
+            `Live curated updates across Hugging Face, research preprints, and AI releases in ${aiNewsChannelText}. Trigger scans or browse top drops anytime via \`/ai-news\`.`,
           inline: false,
         },
         {

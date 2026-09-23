@@ -1,11 +1,14 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v10');
+const { REST, Routes } = require('discord.js');
 const config = require('./config');
 
-if (!config.token || !config.clientId || !config.guildId) {
-  console.warn('[DEPLOY WARN] Skipping slash command deployment: DISCORD_TOKEN, CLIENT_ID, or GUILD_ID is missing.');
+const token = process.env.DISCORD_TOKEN || config.token;
+const clientId = process.env.CLIENT_ID || config.clientId;
+const guildId = process.env.GUILD_ID || config.guildId;
+
+if (!token || !clientId) {
+  console.warn('[DEPLOY WARN] Skipping slash command deployment: DISCORD_TOKEN or CLIENT_ID is missing.');
   console.warn('[DEPLOY WARN] If running on Render, please configure your environment variables in the Render Dashboard.');
   process.exit(0);
 }
@@ -37,26 +40,34 @@ function loadCommandsRecursively(dir) {
 
 loadCommandsRecursively(commandsPath);
 
-const rest = new REST({ version: '10' }).setToken(config.token);
+const rest = new REST({ version: '10' }).setToken(token);
 
 (async () => {
   try {
-    console.log(`[DEPLOY] Started refreshing ${commands.length} application (/) commands.`);
-    console.log(`[DEPLOY] Target Guild ID: ${config.guildId}`);
-    console.log(`[DEPLOY] Target Client ID: ${config.clientId}`);
+    // If a legacy guild ID was previously used, clean its guild-scoped commands to prevent duplicates
+    if (guildId) {
+      try {
+        await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: [] });
+        console.log(`[DEPLOY] Cleaned up legacy guild-scoped commands for guild ${guildId}.`);
+      } catch (cleanErr) {
+        console.warn(`[DEPLOY WARN] Notice: Could not clear guild-scoped commands for guild ${guildId}:`, cleanErr.message);
+      }
+    }
 
+    console.log(`[DEPLOY] Registering ${commands.length} application (/) commands globally...`);
+
+    // Register globally across all guilds
     const data = await rest.put(
-      Routes.applicationGuildCommands(config.clientId, config.guildId),
+      Routes.applicationCommands(clientId),
       { body: commands }
     );
 
-    console.log(`[DEPLOY] Successfully reloaded ${data.length} application (/) commands (HTTP 200 OK):`);
+    console.log(`[DEPLOY] Successfully reloaded ${data.length} application (/) commands globally (HTTP 200 OK):`);
     for (const cmd of data) {
       console.log(`  ✓ /${cmd.name} (ID: ${cmd.id})`);
     }
   } catch (error) {
-    console.error('[DEPLOY ERROR] Failed to register application commands:', error);
-    // Don't kill container startup in production if rate-limited
-    process.exit(0);
+    console.error('[DEPLOY] Global deployment failed:', error);
+    process.exit(1);
   }
 })();

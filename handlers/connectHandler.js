@@ -25,15 +25,18 @@ async function handleConnectModalSubmit(interaction) {
     interaction.fields.getTextInputValue('connect_offer')
   ).trim();
 
-  // Resolve #general channel
-  const generalChannelId = config.channels.general;
-  const generalChannel = generalChannelId
-    ? interaction.guild?.channels.cache.get(generalChannelId)
-    : null;
+  // Resolve target channel: configured ID -> named 'general'/'collab'/'connect' -> interaction.channel
+  const configuredGeneralId = config.channels?.general || process.env.CHANNEL_GENERAL;
+  const generalChannel =
+    (configuredGeneralId && interaction.guild?.channels.cache.get(configuredGeneralId)) ||
+    interaction.guild?.channels.cache.find(
+      (c) => c.isTextBased() && (c.name === 'general' || c.name === 'collab' || c.name === 'connect')
+    ) ||
+    interaction.channel;
 
   if (!generalChannel || !generalChannel.isTextBased()) {
     return interaction.reply({
-      content: '❌ Could not find `#general` channel to dispatch collaboration request.',
+      content: '❌ Could not find a text channel to dispatch your collaboration request.',
       ephemeral: true,
     });
   }
@@ -69,7 +72,7 @@ async function handleConnectModalSubmit(interaction) {
   }
 
   return interaction.reply({
-    content: `✅ Your matchmaker request has been posted in <#${generalChannelId}>! Builders can connect with you directly.`,
+    content: `✅ Your matchmaker request has been posted in <#${generalChannel.id}>! Builders can connect with you directly.`,
     ephemeral: true,
   });
 }
@@ -95,8 +98,9 @@ async function handleConnectButton(interaction) {
   try {
     const initiator = await interaction.client.users.fetch(targetUserId).catch(() => null);
     if (initiator) {
+      const fromChannelText = interaction.channelId ? `<#${interaction.channelId}>` : 'the server';
       await initiator.send({
-        content: `📬 **New Connection Request!**\n<@${interaction.user.id}> (${interaction.user.tag}) wants to collaborate on your build from <#${config.channels.general}>! Reach out to them to start building.`,
+        content: `📬 **New Connection Request!**\n<@${interaction.user.id}> (${interaction.user.tag}) wants to collaborate on your build from ${fromChannelText}! Reach out to them to start building.`,
       }).catch(() => null);
     }
   } catch (dmErr) {

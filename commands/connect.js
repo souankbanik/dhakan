@@ -5,7 +5,6 @@ const {
   TextInputStyle,
   ActionRowBuilder,
 } = require('discord.js');
-const config = require('../config');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,14 +12,6 @@ module.exports = {
     .setDescription('Post a builder matchmaker request to find co-founders, devs, or contributors'),
 
   async execute(interaction) {
-    const botCommandsId = config.channels.botCommands;
-    if (botCommandsId && interaction.channelId !== botCommandsId) {
-      return interaction.reply({
-        content: `❌ This command can only be used in <#${botCommandsId}>.`,
-        ephemeral: true,
-      });
-    }
-
     const modal = new ModalBuilder()
       .setCustomId('modal_connect')
       .setTitle('Builder Collab Search');

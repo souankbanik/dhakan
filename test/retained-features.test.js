@@ -221,8 +221,44 @@ console.log('🧪 Running GOKU Streamlined Architecture Test Suite (Core Utility
     assert.ok(typeof pingCmd.execute === 'function');
     console.log('  ✓ Check 9 Passed: /ping command structure and execution handler verified.');
 
+    // ==============================================================================
+    // Check 10: Channel Resolution Fallbacks (newsService.js)
+    // ==============================================================================
+    const { resolveAiNewsChannel } = require('../services/newsService');
+    const mockClientWithChannel = {
+      channels: {
+        cache: new Map([
+          ['1234567890', { id: '1234567890', name: 'custom-news', isTextBased: () => true }],
+        ]),
+      },
+    };
+    mockClientWithChannel.channels.cache.get = (id) => mockClientWithChannel.channels.cache.get(id);
+
+    const mockGuildWithAiNews = {
+      channels: {
+        cache: [
+          { id: '999888777', name: 'ai-news', isTextBased: () => true },
+          { id: '111222333', name: 'general', isTextBased: () => true },
+        ],
+      },
+    };
+    mockGuildWithAiNews.channels.cache.find = Array.prototype.find;
+
+    // Test fallback to guild channel named 'ai-news'
+    const resolvedFallback = resolveAiNewsChannel(null, mockGuildWithAiNews);
+    assert.strictEqual(resolvedFallback.id, '999888777');
+    assert.strictEqual(resolvedFallback.name, 'ai-news');
+
+    // Test graceful handling when channel is not found
+    const emptyGuild = { channels: { cache: [] } };
+    emptyGuild.channels.cache.find = Array.prototype.find;
+    const notFound = resolveAiNewsChannel(null, emptyGuild);
+    assert.strictEqual(notFound, null);
+
+    console.log('  ✓ Check 10 Passed: newsService.js channel resolver fallback verified.');
+
     console.log('\n==================================================');
-    console.log('🎉 ALL 9/9 RETAINED FEATURES & HEALTH-CHECK TESTS PASSED! (100% Pass Rate)');
+    console.log('🎉 ALL 10/10 RETAINED FEATURES & RESOLVER TESTS PASSED! (100% Pass Rate)');
     console.log('==================================================\n');
   });
 }

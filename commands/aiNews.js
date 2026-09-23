@@ -21,13 +21,16 @@ module.exports = {
     await interaction.deferReply();
 
     const mode = interaction.options.getString('mode') || 'latest';
-    const aiNewsChannelId = config.channels.aiNews;
+    const targetChannel =
+      interaction.guild?.channels?.cache?.find((c) => c.isTextBased() && c.name === 'ai-news') ||
+      (config.channels?.aiNews ? interaction.client.channels.cache.get(config.channels.aiNews) : null);
+    const aiNewsChannelText = targetChannel ? `<#${targetChannel.id}>` : (config.channels?.aiNews ? `<#${config.channels.aiNews}>` : '`#ai-news`');
 
     if (mode === 'scan') {
       try {
         const postedCount = await dispatchRadarDrops(interaction.client);
         return interaction.editReply({
-          content: `✅ **Radar Scan Complete:** Dispatched **${postedCount || 0}** new drop(s) to <#${aiNewsChannelId}>!`,
+          content: `✅ **Radar Scan Complete:** Dispatched **${postedCount || 0}** new drop(s) to ${aiNewsChannelText}!`,
         });
       } catch (err) {
         console.error('[AI NEWS COMMAND ERROR] Scan error:', err);
@@ -52,7 +55,7 @@ module.exports = {
         .setTitle('🛰️ Full-Spectrum AI Intelligence Radar')
         .setColor(0x5865f2)
         .setDescription(
-          `Real-time tracking across Hugging Face, Reddit leaks, lab releases, arXiv preprints, and Hacker News.\nContinuous feed streams 24/7 in <#${aiNewsChannelId}>.`
+          `Real-time tracking across Hugging Face, Reddit leaks, lab releases, arXiv preprints, and Hacker News.\nContinuous feed streams 24/7 in ${aiNewsChannelText}.`
         )
         .setFooter({ text: 'GOKU AI Radar • 5-Pipeline Intelligence' })
         .setTimestamp();

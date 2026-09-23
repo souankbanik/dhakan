@@ -1316,18 +1316,54 @@ async function getUnpostedDrops(database) {
  * @returns {Promise<Array>}
  */
 async function dispatchRadarDrops(client, database) {
-  const targetChannelId = config.channels.aiNews;
-  if (!targetChannelId || !client || !client.channels) return [];
+  if (!client) return [];
+
+  const configuredId = process.env.CHANNEL_AI_NEWS || config.channels?.aiNews;
+  const targetChannels = [];
+
+  // 1. Check configured CHANNEL_AI_NEWS ID first
+  if (configuredId) {
+    const ch =
+      client.channels?.cache?.get(configuredId) ||
+      (await client.channels?.fetch?.(configuredId).catch(() => null));
+    if (ch && ch.isTextBased()) {
+      targetChannels.push(ch);
+    }
+  }
+
+  // 2. Fallback: Search across guilds for text channel named 'ai-news'
+  if (client.guilds?.cache) {
+    for (const [, guild] of client.guilds.cache) {
+      const alreadyCovered = targetChannels.some((c) => c.guild?.id === guild.id);
+      if (!alreadyCovered) {
+        const namedChannel = guild.channels?.cache?.find(
+          (c) => c.isTextBased() && c.name === 'ai-news'
+        );
+        if (namedChannel) {
+          targetChannels.push(namedChannel);
+        }
+      }
+    }
+  }
+
+  // 3. Fallback: Search client channels cache directly if targetChannels still empty
+  if (targetChannels.length === 0 && client.channels?.cache) {
+    const namedChannel = client.channels.cache.find(
+      (c) => c.isTextBased() && c.name === 'ai-news'
+    );
+    if (namedChannel) {
+      targetChannels.push(namedChannel);
+    }
+  }
+
+  if (targetChannels.length === 0) {
+    console.warn('[RADAR] Warning: No target channel found for AI news (checked configured ID and channel named "ai-news"). Skipping dispatch.');
+    return [];
+  }
 
   const db = database || defaultDb;
 
   try {
-    const channel = await client.channels.fetch(targetChannelId).catch(() => null);
-    if (!channel || !channel.isTextBased()) {
-      console.warn(`[RADAR] Target channel ${targetChannelId} not found or not text-based.`);
-      return [];
-    }
-
     const unposted = await getUnpostedDrops(db);
     if (unposted.length === 0) return [];
 
@@ -1364,7 +1400,14 @@ async function dispatchRadarDrops(client, database) {
         })
         .setTimestamp();
 
-      await channel.send({ embeds: [embed] });
+      for (const channel of targetChannels) {
+        try {
+          await channel.send({ embeds: [embed] });
+          console.log(`[RADAR] Dispatched ${drop.type} "${drop.cleanedTitle || drop.title}" to #${channel.name || channel.id}`);
+        } catch (sendErr) {
+          console.warn(`[RADAR WARN] Failed to dispatch drop to #${channel.name || channel.id}:`, sendErr.message);
+        }
+      }
 
       recordDrop(drop.id, db);
       if (drop.rawId) {
@@ -1372,7 +1415,6 @@ async function dispatchRadarDrops(client, database) {
       }
 
       postedItems.push(drop);
-      console.log(`[RADAR] Dispatched ${drop.type} "${drop.cleanedTitle || drop.title}" to #${channel.name || targetChannelId}`);
     }
 
     return postedItems;
