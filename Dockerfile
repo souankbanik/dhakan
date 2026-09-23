@@ -30,5 +30,5 @@ RUN mkdir -p /data
 # Default port for Render web service
 ENV PORT=3000
 
-# Automated startup: deploy application slash commands first, then start bot and health-check server
-CMD ["sh", "-c", "node deploy-commands.js; node index.js"]
+# Start bot and health-check server immediately (index.js handles command registration and port binding on boot)
+CMD ["node", "index.js"]
