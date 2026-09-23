@@ -1315,6 +1315,41 @@ async function getUnpostedDrops(database) {
  * @param {import('better-sqlite3').Database} [database]
  * @returns {Promise<Array>}
  */
+/**
+ * Builds standard EmbedBuilder instance for a radar drop.
+ * @param {Object} drop
+ * @returns {EmbedBuilder}
+ */
+function buildRadarEmbed(drop) {
+  const description =
+    drop.executiveDescription ||
+    formatExecutiveDescription(
+      drop.summary,
+      drop.source || 'AI Lab / Creator',
+      drop.metrics || 'Verified Signal',
+      drop.specs || 'General Release',
+      drop.url
+    );
+
+  const categoryConfig = RADAR_CATEGORIES[drop.category] || RADAR_CATEGORIES.WEIGHTS;
+
+  return new EmbedBuilder()
+    .setAuthor({
+      name: categoryConfig.author || 'GOKU AI Radar',
+      iconURL: categoryConfig.icon,
+      url: drop.url,
+    })
+    .setTitle(drop.title.length > 250 ? drop.title.slice(0, 247) + '...' : drop.title)
+    .setURL(drop.url)
+    .setColor(drop.color || categoryConfig.color || 0x5865f2)
+    .setThumbnail(categoryConfig.thumbnail)
+    .setDescription(description)
+    .setFooter({
+      text: categoryConfig.footer || 'GOKU AI Radar • Auto-Ingest Active',
+    })
+    .setTimestamp();
+}
+
 async function dispatchRadarDrops(client, database) {
   if (!client) return [];
 
@@ -1372,33 +1407,7 @@ async function dispatchRadarDrops(client, database) {
     const postedItems = [];
 
     for (const drop of batch) {
-      const description =
-        drop.executiveDescription ||
-        formatExecutiveDescription(
-          drop.summary,
-          drop.source || 'AI Lab / Creator',
-          drop.metrics || 'Verified Signal',
-          drop.specs || 'General Release',
-          drop.url
-        );
-
-      const categoryConfig = RADAR_CATEGORIES[drop.category] || RADAR_CATEGORIES.WEIGHTS;
-
-      const embed = new EmbedBuilder()
-        .setAuthor({
-          name: categoryConfig.author || 'GOKU AI Radar',
-          iconURL: categoryConfig.icon,
-          url: drop.url,
-        })
-        .setTitle(drop.title.length > 250 ? drop.title.slice(0, 247) + '...' : drop.title)
-        .setURL(drop.url)
-        .setColor(drop.color || categoryConfig.color || 0x5865f2)
-        .setThumbnail(categoryConfig.thumbnail)
-        .setDescription(description)
-        .setFooter({
-          text: categoryConfig.footer || 'GOKU AI Radar • Auto-Ingest Active',
-        })
-        .setTimestamp();
+      const embed = buildRadarEmbed(drop);
 
       for (const channel of targetChannels) {
         try {
@@ -1479,4 +1488,5 @@ module.exports = {
   dispatchRadarDrops,
   dispatchDailyRadar,
   startRadarCron,
+  buildRadarEmbed,
 };

@@ -1,5 +1,4 @@
 const { Events, ActivityType } = require('discord.js');
-const { startRadarCron } = require('../services/radarService');
 
 module.exports = {
   name: Events.ClientReady,
@@ -12,12 +11,5 @@ module.exports = {
       activities: [{ name: 'over builder builds', type: ActivityType.Watching }],
       status: 'online',
     });
-
-    // Start 10-minute Full-Spectrum AI Radar cron dispatcher
-    try {
-      startRadarCron(client);
-    } catch (cronErr) {
-      console.error('[READY] Failed to initialize AI Model Radar cron service:', cronErr);
-    }
   },
 };

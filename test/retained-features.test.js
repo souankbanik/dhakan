@@ -222,17 +222,16 @@ console.log('🧪 Running GOKU Streamlined Architecture Test Suite (Core Utility
     console.log('  ✓ Check 9 Passed: /ping command structure and execution handler verified.');
 
     // ==============================================================================
-    // Check 10: Channel Resolution Fallbacks (newsService.js)
+    // Check 10: Channel Resolution & News Broadcaster (newsService.js & config.js)
     // ==============================================================================
-    const { resolveAiNewsChannel } = require('../services/newsService');
-    const mockClientWithChannel = {
-      channels: {
-        cache: new Map([
-          ['1234567890', { id: '1234567890', name: 'custom-news', isTextBased: () => true }],
-        ]),
-      },
-    };
-    mockClientWithChannel.channels.cache.get = (id) => mockClientWithChannel.channels.cache.get(id);
+    const { resolveAiNewsChannel, dispatchNewsToTargetChannel, fetchAndDispatchLatestNews } = require('../services/newsService');
+    assert.ok(typeof dispatchNewsToTargetChannel === 'function', 'dispatchNewsToTargetChannel must be a function');
+    assert.ok(typeof fetchAndDispatchLatestNews === 'function', 'fetchAndDispatchLatestNews must be a function');
+
+    // Test configured target channel constants
+    const config = require('../config');
+    assert.strictEqual(config.CHANNEL_AI_NEWS, '1551259324762947716');
+    assert.strictEqual(config.CHANNEL_GENERAL, '1514716972481515520');
 
     const mockGuildWithAiNews = {
       channels: {
@@ -255,7 +254,7 @@ console.log('🧪 Running GOKU Streamlined Architecture Test Suite (Core Utility
     const notFound = resolveAiNewsChannel(null, emptyGuild);
     assert.strictEqual(notFound, null);
 
-    console.log('  ✓ Check 10 Passed: newsService.js channel resolver fallback verified.');
+    console.log('  ✓ Check 10 Passed: newsService.js channel broadcaster and target channel constants verified.');
 
     console.log('\n==================================================');
     console.log('🎉 ALL 10/10 RETAINED FEATURES & RESOLVER TESTS PASSED! (100% Pass Rate)');

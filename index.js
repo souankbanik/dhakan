@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Collection, GatewayIntentBits, Partials, REST, Routes, Events } = require('discord.js');
 const config = require('./config');
+const { fetchAndDispatchLatestNews } = require('./services/newsService');
 
 console.log('[GOKU OS] Starting up...');
 
@@ -127,6 +128,25 @@ client.once(Events.ClientReady, async () => {
   } catch (error) {
     console.error('[DEPLOY ERROR] Failed to register slash commands:', error);
   }
+
+  console.log(`[GOKU OS] System online as ${client.user.tag}.`);
+
+  // 1. Instant test dispatch on boot
+  try {
+    console.log('[AI RADAR] Triggering startup news verification...');
+    await fetchAndDispatchLatestNews(client);
+  } catch (err) {
+    console.error('[AI RADAR STARTUP ERROR]:', err);
+  }
+
+  // 2. Schedule recurring checks (every 30 minutes)
+  setInterval(async () => {
+    try {
+      await fetchAndDispatchLatestNews(client);
+    } catch (err) {
+      console.error('[AI RADAR LOOP ERROR]:', err);
+    }
+  }, 30 * 60 * 1000);
 });
 
 // Automatic 0-second sync when joining a new server

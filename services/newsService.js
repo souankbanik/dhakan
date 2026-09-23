@@ -1,9 +1,69 @@
 /**
  * News Ingestion Engine (AI News Radar Service)
- * Provides channel resolution fallbacks and news radar dispatching
+ * Direct news broadcaster targeting designated channel with permission checks
  */
 
 const radarService = require('./radarService');
+
+/**
+ * Broadcasts an AI news embed directly to the designated AI News channel.
+ * @param {import('discord.js').Client} client - The Discord Client instance.
+ * @param {import('discord.js').EmbedBuilder} embed - The formatted news embed payload.
+ */
+async function dispatchNewsToTargetChannel(client, embed) {
+  const targetChannelId = process.env.CHANNEL_AI_NEWS || '1551259324762947716';
+
+  try {
+    const channel = await client.channels.fetch(targetChannelId);
+
+    if (!channel || !channel.isTextBased()) {
+      console.error(`[AI RADAR ERROR] Channel ${targetChannelId} not found or is not a text channel.`);
+      return;
+    }
+
+    // Verify write permissions
+    const permissions = channel.permissionsFor(client.user);
+    if (!permissions || !permissions.has(['ViewChannel', 'SendMessages', 'EmbedLinks'])) {
+      console.error(`[AI RADAR ERROR] Missing ViewChannel, SendMessages, or EmbedLinks permissions in channel ${targetChannelId}.`);
+      return;
+    }
+
+    await channel.send({ embeds: [embed] });
+    console.log(`[AI RADAR] Successfully dispatched news update to #${channel.name} (${targetChannelId}).`);
+  } catch (error) {
+    console.error(`[AI RADAR ERROR] Failed to send news to channel ${targetChannelId}:`, error.message);
+  }
+}
+
+/**
+ * Fetches latest AI news drops and dispatches formatted embeds to the designated target channel.
+ * @param {import('discord.js').Client} client - The Discord Client instance.
+ */
+async function fetchAndDispatchLatestNews(client) {
+  const drops = await radarService.getLatestDrops();
+  let unposted = await radarService.getUnpostedDrops();
+
+  // If all drops were already posted, use the freshest drop for startup verification
+  if (unposted.length === 0 && drops.length > 0) {
+    unposted = [drops[0]];
+  }
+
+  if (unposted.length === 0) {
+    console.log('[AI RADAR] No news drops available to dispatch.');
+    return;
+  }
+
+  // Dispatch the latest news item
+  const drop = unposted[0];
+  const embed = radarService.buildRadarEmbed(drop);
+
+  await dispatchNewsToTargetChannel(client, embed);
+
+  radarService.recordDrop(drop.id);
+  if (drop.rawId) {
+    radarService.recordDrop(drop.rawId);
+  }
+}
 
 /**
  * Resolves the target AI news channel by checking configured ID first,
@@ -29,5 +89,7 @@ function resolveAiNewsChannel(client, guild) {
 
 module.exports = {
   ...radarService,
+  dispatchNewsToTargetChannel,
+  fetchAndDispatchLatestNews,
   resolveAiNewsChannel,
 };

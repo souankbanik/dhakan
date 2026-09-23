@@ -19,10 +19,12 @@ const config = {
   guildId: process.env.GUILD_ID || '',
   rounitUserId: process.env.ROUNIT_USER_ID || '1517531053789544499',
   channels: {
-    general: process.env.CHANNEL_GENERAL || '',
+    general: process.env.CHANNEL_GENERAL || '1514716972481515520',
     botCommands: process.env.CHANNEL_BOT_COMMANDS || '',
-    aiNews: process.env.CHANNEL_AI_NEWS || '',
+    aiNews: process.env.CHANNEL_AI_NEWS || '1551259324762947716',
   },
+  CHANNEL_AI_NEWS: process.env.CHANNEL_AI_NEWS || '1551259324762947716',
+  CHANNEL_GENERAL: process.env.CHANNEL_GENERAL || '1514716972481515520',
   databasePath: process.env.DB_PATH || process.env.DATABASE_PATH || path.join(__dirname, 'goku.sqlite'),
   missingVars,
 };
