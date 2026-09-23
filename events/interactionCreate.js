@@ -3,7 +3,7 @@ const {
   handleConnectModalSubmit,
   handleConnectButton,
 } = require('../handlers/connectHandler');
-const { handleAboutButtons } = require('../commands/aboutdhakan');
+const { handleAboutButtons } = require('../commands/aboutgoku');
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -42,7 +42,7 @@ module.exports = {
           return;
         }
 
-        // About DHAKAN overview buttons
+        // About GOKU overview buttons
         if (
           interaction.customId === 'btn_about_commands' ||
           interaction.customId === 'btn_about_stack'

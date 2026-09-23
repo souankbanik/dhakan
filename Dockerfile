@@ -1,4 +1,4 @@
-# Production Dockerfile for DHAKAN Discord Bot (Render / Fly.io / Container)
+# Production Dockerfile for GOKU Discord Bot (Render / Fly.io / Container)
 FROM node:22-slim
 
 # Install build dependencies required for compiling native better-sqlite3 C++ bindings

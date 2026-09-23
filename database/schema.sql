@@ -1,4 +1,4 @@
--- DHAKAN Database Schema (Core 3 Features)
+-- GOKU Database Schema (Utility OS)
 -- 1. AI News Radar (posted_drops for deduplication)
 -- 2. Domain Checker (stateless Cloudflare DoH)
 -- 3. Builder Connect (builder matchmaker & profiles)

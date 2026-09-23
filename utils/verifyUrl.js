@@ -33,7 +33,7 @@ async function verifyUrl(url, timeoutMs = 5000) {
         method: 'HEAD',
         signal: controller.signal,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) DHAKAN-Link-Guard/1.0',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) GOKU-Link-Guard/1.0',
           'Accept': '*/*',
         },
         redirect: 'follow',
@@ -48,7 +48,7 @@ async function verifyUrl(url, timeoutMs = 5000) {
         method: 'GET',
         signal: controller.signal,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) DHAKAN-Link-Guard/1.0',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) GOKU-Link-Guard/1.0',
           'Range': 'bytes=0-100',
         },
         redirect: 'follow',
@@ -62,7 +62,7 @@ async function verifyUrl(url, timeoutMs = 5000) {
       const getResponse = await fetch(parsed.toString(), {
         method: 'GET',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) DHAKAN-Link-Guard/1.0',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) GOKU-Link-Guard/1.0',
           'Range': 'bytes=0-100',
         },
         redirect: 'follow',

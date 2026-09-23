@@ -4,6 +4,8 @@ const path = require('node:path');
 const { Client, Collection, GatewayIntentBits, Partials } = require('discord.js');
 const config = require('./config');
 
+console.log('[GOKU OS] Starting up...');
+
 // Define port provided by Render's environment, default to 3000 locally
 const PORT = process.env.PORT || 3000;
 
@@ -14,7 +16,8 @@ const server = http.createServer((req, res) => {
     res.end(
       JSON.stringify({
         status: 'online',
-        service: 'DHAKAN (Builder OS)',
+        service: 'GOKU (Utility OS)',
+        creator: 'master pusher',
         discord: {
           tokenConfigured: Boolean(config.token),
           loggedIn: Boolean(client.user),
@@ -70,7 +73,7 @@ function loadCommands(dir) {
       const command = require(fullPath);
       if ('data' in command && 'execute' in command) {
         client.commands.set(command.data.name, command);
-        console.log(`[INIT] Registered command: /${command.data.name}`);
+        console.log(`[GOKU OS] Registered command: /${command.data.name}`);
       } else {
         console.warn(`[WARN] The command at ${fullPath} is missing required 'data' or 'execute' properties.`);
       }
@@ -92,7 +95,7 @@ for (const file of eventFiles) {
   } else {
     client.on(event.name, (...args) => event.execute(...args));
   }
-  console.log(`[INIT] Registered event: ${event.name}`);
+  console.log(`[GOKU OS] Registered event: ${event.name}`);
 }
 
 // Global process error handlers for production stability
@@ -133,5 +136,5 @@ if (config.token) {
   });
 } else {
   console.warn('[WARN] No DISCORD_TOKEN found in environment. Bot client will not log in.');
-  console.warn('[WARN] Please populate your .env file using .env.example as a guide.');
+  console.warn('[WARN] If running on Render: Open Render Dashboard -> Your Service -> Environment -> Add DISCORD_TOKEN');
 }

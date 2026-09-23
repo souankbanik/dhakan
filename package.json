@@ -1,7 +1,7 @@
 {
-  "name": "discord-bot",
+  "name": "goku-bot",
   "version": "1.0.0",
-  "description": "Production-ready modular Discord.js v14 bot with SQLite persistence",
+  "description": "Utility bot created by master pusher",
   "main": "index.js",
   "engines": {
     "node": ">=20.0.0"

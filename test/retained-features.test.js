@@ -5,10 +5,10 @@ const Database = require('better-sqlite3');
 const { schema } = require('../database/schema');
 const { cleanDomainName } = require('../utils/checkDomain');
 
-console.log('🧪 Running DHAKAN Streamlined Architecture Test Suite (Core 3 Features)...\n');
+console.log('🧪 Running GOKU Streamlined Architecture Test Suite (Core Utility Features)...\n');
 
 // ==============================================================================
-// Check 1: Command Directory Verification (Exactly 4 commands)
+// Check 1: Command Directory Verification (Exactly 5 commands)
 // ==============================================================================
 {
   const commandsDir = path.join(__dirname, '..', 'commands');
@@ -18,7 +18,7 @@ console.log('🧪 Running DHAKAN Streamlined Architecture Test Suite (Core 3 Fea
     return cmd.data.name;
   }).sort();
 
-  const expectedCommands = ['aboutdhakan', 'ai-news', 'check-domain', 'connect', 'ping'].sort();
+  const expectedCommands = ['aboutgoku', 'ai-news', 'check-domain', 'connect', 'ping'].sort();
 
   assert.deepStrictEqual(
     commandNames,
@@ -26,7 +26,7 @@ console.log('🧪 Running DHAKAN Streamlined Architecture Test Suite (Core 3 Fea
     `Commands directory must contain exactly: ${expectedCommands.join(', ')}`
   );
 
-  console.log('  ✓ Check 1 Passed: Exactly 5 slash commands verified: /aboutdhakan, /ai-news, /check-domain, /connect, /ping.');
+  console.log('  ✓ Check 1 Passed: Exactly 5 slash commands verified: /aboutgoku, /ai-news, /check-domain, /connect, /ping.');
 }
 
 // ==============================================================================
@@ -153,15 +153,15 @@ console.log('🧪 Running DHAKAN Streamlined Architecture Test Suite (Core 3 Fea
 }
 
 // ==============================================================================
-// Check 7: /aboutdhakan 3-Pillar Scope & Buttons
+// Check 7: /aboutgoku Utility Scope & Buttons
 // ==============================================================================
 {
-  const aboutCmd = require('../commands/aboutdhakan');
-  assert.strictEqual(aboutCmd.data.name, 'aboutdhakan');
+  const aboutCmd = require('../commands/aboutgoku');
+  assert.strictEqual(aboutCmd.data.name, 'aboutgoku');
   assert.ok(typeof aboutCmd.execute === 'function');
   assert.ok(typeof aboutCmd.handleAboutButtons === 'function');
 
-  console.log('  ✓ Check 7 Passed: /aboutdhakan command and button directory verified.');
+  console.log('  ✓ Check 7 Passed: /aboutgoku command and button directory verified.');
 }
 
 // ==============================================================================
@@ -176,7 +176,8 @@ console.log('🧪 Running DHAKAN Streamlined Architecture Test Suite (Core 3 Fea
       res.end(
         JSON.stringify({
           status: 'online',
-          service: 'DHAKAN (Builder OS)',
+          service: 'GOKU (Utility OS)',
+          creator: 'master pusher',
           timestamp: new Date().toISOString(),
         })
       );
@@ -195,7 +196,8 @@ console.log('🧪 Running DHAKAN Streamlined Architecture Test Suite (Core 3 Fea
     assert.strictEqual(resHealth.headers.get('content-type'), 'application/json');
     const jsonHealth = await resHealth.json();
     assert.strictEqual(jsonHealth.status, 'online');
-    assert.strictEqual(jsonHealth.service, 'DHAKAN (Builder OS)');
+    assert.strictEqual(jsonHealth.service, 'GOKU (Utility OS)');
+    assert.strictEqual(jsonHealth.creator, 'master pusher');
     assert.ok(jsonHealth.timestamp);
 
     // Test / root endpoint

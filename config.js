@@ -23,7 +23,7 @@ const config = {
     botCommands: process.env.CHANNEL_BOT_COMMANDS || '1549346668359716924',
     aiNews: process.env.CHANNEL_AI_NEWS || '1551629280604332053',
   },
-  databasePath: process.env.DB_PATH || process.env.DATABASE_PATH || path.join(__dirname, 'database.sqlite'),
+  databasePath: process.env.DB_PATH || process.env.DATABASE_PATH || path.join(__dirname, 'goku.sqlite'),
   missingVars,
 };
 

@@ -1,5 +1,5 @@
 /**
- * Automated Verification Suite for DHAKAN Radar Sanitizer & Spec Extraction Pipeline
+ * Automated Verification Suite for GOKU Radar Sanitizer & Spec Extraction Pipeline
  * Run with: node test/radar-sanitizer.test.js
  */
 
@@ -14,7 +14,7 @@ const {
   RADAR_CATEGORIES,
 } = require('../services/radarService');
 
-console.log('🧪 Running DHAKAN Radar Sanitizer & Metadata Extraction Test Suite...\n');
+console.log('🧪 Running GOKU Radar Sanitizer & Metadata Extraction Test Suite...\n');
 
 let passedTests = 0;
 const totalTests = 5;

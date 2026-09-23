@@ -1,5 +1,5 @@
 /**
- * Database schema definitions for DHAKAN Discord Bot (Streamlined Core Architecture)
+ * Database schema definitions for GOKU Discord Bot (Utility OS)
  * 1. AI News Radar (posted_drops for deduplication)
  * 2. Domain Checker (/check-domain - stateless DNS/DoH lookups)
  * 3. Builder Connect (/connect - builder matchmaker and profiles)

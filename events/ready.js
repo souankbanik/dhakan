@@ -5,8 +5,8 @@ module.exports = {
   name: Events.ClientReady,
   once: true,
   async execute(client) {
-    console.log(`[READY] Logged in as ${client.user.tag} (ID: ${client.user.id})`);
-    console.log(`[READY] Serving ${client.guilds.cache.size} guild(s) and ${client.users.cache.size} cached user(s).`);
+    console.log(`[GOKU OS] Logged in successfully as ${client.user.tag} (ID: ${client.user.id})`);
+    console.log(`[GOKU OS] Serving ${client.guilds.cache.size} guild(s) and ${client.users.cache.size} cached user(s).`);
 
     client.user.setPresence({
       activities: [{ name: 'over builder builds', type: ActivityType.Watching }],

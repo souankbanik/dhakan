@@ -6,7 +6,7 @@ const config = require('../config');
 
 const parser = new Parser({
   headers: {
-    'User-Agent': 'DHAKAN-Radar/2.0 (by RounitHQ)',
+    'User-Agent': 'GOKU-Radar/2.0',
     'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
   },
   timeout: 8000,
@@ -21,7 +21,7 @@ const RADAR_CATEGORIES = {
     author: 'Hugging Face • Model Drop',
     icon: 'https://huggingface.co/front/assets/huggingface_logo-noborder.png',
     thumbnail: 'https://huggingface.co/front/assets/huggingface_logo-noborder.png',
-    footer: 'DHAKAN AI Radar • Open Weights Ingestion',
+    footer: 'GOKU AI Radar • Open Weights Ingestion',
   },
   LEAK_CHATTER: {
     tag: '[👀 LEAK / CHATTER]',
@@ -30,7 +30,7 @@ const RADAR_CATEGORIES = {
     author: 'Reddit • Community Intel & Leaks',
     icon: 'https://www.redditstatic.com/shreddit/assets/favicon/192x192.png',
     thumbnail: 'https://www.redditstatic.com/shreddit/assets/favicon/192x192.png',
-    footer: 'DHAKAN AI Radar • Community Signal Tracking',
+    footer: 'GOKU AI Radar • Community Signal Tracking',
   },
   BENCHMARK: {
     tag: '[📊 BENCHMARK]',
@@ -39,7 +39,7 @@ const RADAR_CATEGORIES = {
     author: 'Community Benchmark • Evaluation',
     icon: 'https://www.redditstatic.com/shreddit/assets/favicon/192x192.png',
     thumbnail: 'https://www.redditstatic.com/shreddit/assets/favicon/192x192.png',
-    footer: 'DHAKAN AI Radar • Benchmark Tracking',
+    footer: 'GOKU AI Radar • Benchmark Tracking',
   },
   FRONTIER_DROP: {
     tag: '[🚨 FRONTIER DROP]',
@@ -48,7 +48,7 @@ const RADAR_CATEGORIES = {
     author: 'Official Lab Frontier Dispatch',
     icon: 'https://cdn-icons-png.flaticon.com/512/8637/8637106.png',
     thumbnail: 'https://cdn-icons-png.flaticon.com/512/8637/8637106.png',
-    footer: 'DHAKAN AI Radar • Frontier Lab Announcements',
+    footer: 'GOKU AI Radar • Frontier Lab Announcements',
   },
   RESEARCH_PAPER: {
     tag: '[📄 RESEARCH BREAKTHROUGH]',
@@ -57,7 +57,7 @@ const RADAR_CATEGORIES = {
     author: 'arXiv • cs.AI & cs.CL Breakthrough',
     icon: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
     thumbnail: 'https://cdn-icons-png.flaticon.com/512/2991/2991148.png',
-    footer: 'DHAKAN AI Radar • Research Intelligence',
+    footer: 'GOKU AI Radar • Research Intelligence',
   },
   INDUSTRY_INTEL: {
     tag: '[📰 INDUSTRY INTEL]',
@@ -66,7 +66,7 @@ const RADAR_CATEGORIES = {
     author: 'Hacker News • Tech Intelligence',
     icon: 'https://cdn-icons-png.flaticon.com/512/5968/5968853.png',
     thumbnail: 'https://cdn-icons-png.flaticon.com/512/5968/5968853.png',
-    footer: 'DHAKAN AI Radar • Industry Pulse',
+    footer: 'GOKU AI Radar • Industry Pulse',
   },
 };
 
@@ -746,7 +746,7 @@ async function fetchHFTrending(mockData) {
 
       const res = await fetch('https://huggingface.co/api/trending?limit=15&type=model', {
         headers: {
-          'User-Agent': 'DHAKAN-Radar/2.0 (by RounitHQ)',
+          'User-Agent': 'GOKU-Radar/2.0 (by master pusher)',
           'Accept': 'application/json',
         },
         signal: controller.signal,
@@ -875,7 +875,7 @@ async function fetchRedditChatter(mockChildren) {
 
       const res = await fetch(`https://www.reddit.com/r/${sub}/hot.json?limit=25`, {
         headers: {
-          'User-Agent': 'DHAKAN-Radar/2.0 (by RounitHQ)',
+          'User-Agent': 'GOKU-Radar/2.0 (by master pusher)',
           'Accept': 'application/json',
         },
         signal: controller.signal,
@@ -942,7 +942,7 @@ async function fetchRedditChatter(mockChildren) {
         const rssTimeout = setTimeout(() => rssCtrl.abort(), 8000);
 
         const rssRes = await fetch(`https://www.reddit.com/r/${sub}/hot.rss`, {
-          headers: { 'User-Agent': 'DHAKAN-Radar/2.0 (by RounitHQ)' },
+          headers: { 'User-Agent': 'GOKU-Radar/2.0 (by master pusher)' },
           signal: rssCtrl.signal,
         });
         clearTimeout(rssTimeout);
@@ -1030,7 +1030,7 @@ async function fetchOfficialLabFeeds(mockFeeds) {
 
         const res = await fetch(feedConfig.url, {
           headers: {
-            'User-Agent': 'DHAKAN-Radar/2.0 (by RounitHQ)',
+            'User-Agent': 'GOKU-Radar/2.0 (by master pusher)',
             'Accept': 'application/rss+xml, application/atom+xml, text/xml, */*',
           },
           signal: controller.signal,
@@ -1113,7 +1113,7 @@ async function fetchArXivAI(mockItems) {
         'http://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.CL&sortBy=submittedDate&sortOrder=descending&max_results=5';
 
       const res = await fetch(url, {
-        headers: { 'User-Agent': 'DHAKAN-Radar/2.0 (by RounitHQ)' },
+        headers: { 'User-Agent': 'GOKU-Radar/2.0 (by master pusher)' },
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -1188,7 +1188,7 @@ async function fetchHackerNewsAI(mockItems) {
       const timeout = setTimeout(() => controller.abort(), 10000);
 
       const topRes = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json', {
-        headers: { 'User-Agent': 'DHAKAN-Radar/2.0 (by RounitHQ)' },
+        headers: { 'User-Agent': 'GOKU-Radar/2.0 (by master pusher)' },
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -1203,7 +1203,7 @@ async function fetchHackerNewsAI(mockItems) {
           const itemCtrl = new AbortController();
           const itemTimeout = setTimeout(() => itemCtrl.abort(), 4000);
           const itemRes = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`, {
-            headers: { 'User-Agent': 'DHAKAN-Radar/2.0 (by RounitHQ)' },
+            headers: { 'User-Agent': 'GOKU-Radar/2.0 (by master pusher)' },
             signal: itemCtrl.signal,
           });
           clearTimeout(itemTimeout);
@@ -1350,7 +1350,7 @@ async function dispatchRadarDrops(client, database) {
 
       const embed = new EmbedBuilder()
         .setAuthor({
-          name: categoryConfig.author || 'DHAKAN AI Radar',
+          name: categoryConfig.author || 'GOKU AI Radar',
           iconURL: categoryConfig.icon,
           url: drop.url,
         })
@@ -1360,7 +1360,7 @@ async function dispatchRadarDrops(client, database) {
         .setThumbnail(categoryConfig.thumbnail)
         .setDescription(description)
         .setFooter({
-          text: categoryConfig.footer || 'DHAKAN AI Radar • Auto-Ingest Active',
+          text: categoryConfig.footer || 'GOKU AI Radar • Auto-Ingest Active',
         })
         .setTimestamp();
 

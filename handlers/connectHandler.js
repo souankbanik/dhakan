@@ -48,7 +48,7 @@ async function handleConnectModalSubmit(interaction) {
       { name: 'Building', value: pitch, inline: false },
       { name: 'Offering', value: offering, inline: false }
     )
-    .setFooter({ text: 'DHAKAN Matchmaker • Click below to connect with initiator' })
+    .setFooter({ text: 'GOKU Matchmaker • Click below to connect with initiator' })
     .setTimestamp();
 
   const row = new ActionRowBuilder().addComponents(

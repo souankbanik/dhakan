@@ -3,16 +3,25 @@ const fs = require('node:fs');
 const Database = require('better-sqlite3');
 require('dotenv').config();
 
-// Resolve database path: process.env.DB_PATH or default to ../database.sqlite
+// Resolve database path: process.env.DB_PATH or default to ../goku.sqlite
 const rawDbPath = process.env.DB_PATH || process.env.DATABASE_PATH;
 const dbPath = rawDbPath
   ? (path.isAbsolute(rawDbPath) ? rawDbPath : path.resolve(process.cwd(), rawDbPath))
-  : path.join(__dirname, '../database.sqlite');
+  : path.join(__dirname, '../goku.sqlite');
 
 // Ensure parent directory of dbPath exists synchronously
 const dir = path.dirname(dbPath);
 if (!fs.existsSync(dir)) {
   fs.mkdirSync(dir, { recursive: true });
+}
+
+// Preserve existing local development data if migrating from database.sqlite
+if (!fs.existsSync(dbPath) && fs.existsSync(path.join(__dirname, '../database.sqlite'))) {
+  try {
+    fs.copyFileSync(path.join(__dirname, '../database.sqlite'), dbPath);
+  } catch {
+    // Ignore copy error, clean database will be initialized
+  }
 }
 
 // Initialize SQLite database instance

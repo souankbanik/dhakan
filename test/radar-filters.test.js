@@ -1,5 +1,5 @@
 /**
- * Automated Verification Suite for DHAKAN Full-Spectrum AI Radar
+ * Automated Verification Suite for GOKU Full-Spectrum AI Radar
  * Run with: node test/radar-filters.test.js
  */
 
@@ -18,7 +18,7 @@ const {
   recordDrop,
 } = require('../services/radarService');
 
-console.log('🧪 Running DHAKAN Full-Spectrum AI Radar Verification Suite...\n');
+console.log('🧪 Running GOKU Full-Spectrum AI Radar Verification Suite...\n');
 
 let passedTests = 0;
 const totalTests = 7;

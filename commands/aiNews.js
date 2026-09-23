@@ -54,7 +54,7 @@ module.exports = {
         .setDescription(
           `Real-time tracking across Hugging Face, Reddit leaks, lab releases, arXiv preprints, and Hacker News.\nContinuous feed streams 24/7 in <#${aiNewsChannelId}>.`
         )
-        .setFooter({ text: 'DHAKAN AI Radar • 5-Pipeline Intelligence' })
+        .setFooter({ text: 'GOKU AI Radar • 5-Pipeline Intelligence' })
         .setTimestamp();
 
       for (const drop of topDrops) {

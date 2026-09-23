@@ -54,7 +54,7 @@ module.exports = {
             inline: false,
           }
         )
-        .setFooter({ text: 'DHAKAN Domain Scout • Verified via Cloudflare DoH' })
+        .setFooter({ text: 'GOKU Domain Scout • Verified via Cloudflare DoH' })
         .setTimestamp();
 
       return interaction.editReply({ embeds: [embed] });
@@ -77,7 +77,7 @@ module.exports = {
             ? [{ name: 'Resolved Nameservers (NS)', value: nsRecords.map((ns) => `• \`${ns}\``).join('\n'), inline: false }]
             : [{ name: 'Status', value: 'Zone authority active / DNS records found', inline: false }])
         )
-        .setFooter({ text: 'DHAKAN Domain Scout' })
+        .setFooter({ text: 'GOKU Domain Scout' })
         .setTimestamp();
 
       return interaction.editReply({ embeds: [embed] });
@@ -88,7 +88,7 @@ module.exports = {
       .setTitle(`⚠️ Domain Check Inconclusive: ${result.domain}`)
       .setColor(0xfee75c)
       .setDescription(`Could not definitively resolve status for \`${result.domain}\`.\nReason: ${result.statusText}`)
-      .setFooter({ text: 'DHAKAN Domain Scout' })
+      .setFooter({ text: 'GOKU Domain Scout' })
       .setTimestamp();
 
     return interaction.editReply({ embeds: [errorEmbed] });
