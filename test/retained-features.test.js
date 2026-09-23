@@ -18,7 +18,7 @@ console.log('🧪 Running DHAKAN Streamlined Architecture Test Suite (Core 3 Fea
     return cmd.data.name;
   }).sort();
 
-  const expectedCommands = ['aboutdhakan', 'ai-news', 'check-domain', 'connect'].sort();
+  const expectedCommands = ['aboutdhakan', 'ai-news', 'check-domain', 'connect', 'ping'].sort();
 
   assert.deepStrictEqual(
     commandNames,
@@ -26,7 +26,7 @@ console.log('🧪 Running DHAKAN Streamlined Architecture Test Suite (Core 3 Fea
     `Commands directory must contain exactly: ${expectedCommands.join(', ')}`
   );
 
-  console.log('  ✓ Check 1 Passed: Exactly 4 retained slash commands verified: /aboutdhakan, /ai-news, /check-domain, /connect.');
+  console.log('  ✓ Check 1 Passed: Exactly 5 slash commands verified: /aboutdhakan, /ai-news, /check-domain, /connect, /ping.');
 }
 
 // ==============================================================================
@@ -210,8 +210,17 @@ console.log('🧪 Running DHAKAN Streamlined Architecture Test Suite (Core 3 Fea
 
     server.close();
     console.log('  ✓ Check 8 Passed: Internal HTTP health-check server handles /health and / with 200 OK JSON payload.');
+
+    // ==============================================================================
+    // Check 9: /ping Command Structure
+    // ==============================================================================
+    const pingCmd = require('../commands/ping');
+    assert.strictEqual(pingCmd.data.name, 'ping');
+    assert.ok(typeof pingCmd.execute === 'function');
+    console.log('  ✓ Check 9 Passed: /ping command structure and execution handler verified.');
+
     console.log('\n==================================================');
-    console.log('🎉 ALL 8/8 RETAINED FEATURES & HEALTH-CHECK TESTS PASSED! (100% Pass Rate)');
+    console.log('🎉 ALL 9/9 RETAINED FEATURES & HEALTH-CHECK TESTS PASSED! (100% Pass Rate)');
     console.log('==================================================\n');
   });
 }

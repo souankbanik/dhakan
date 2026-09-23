@@ -84,8 +84,8 @@ module.exports = {
             inline: false,
           },
           {
-            name: 'ℹ️ Information',
-            value: '`/aboutdhakan` • System overview, commands directory, and tech stack',
+            name: 'ℹ️ Information & Diagnostics',
+            value: '`/aboutdhakan` • System overview & directory\n`/ping` • Realtime latency & Discord heartbeat',
             inline: false,
           }
         )
