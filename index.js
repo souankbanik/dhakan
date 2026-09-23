@@ -95,6 +95,71 @@ for (const file of eventFiles) {
   console.log(`[GOKU OS] Registered event: ${event.name}`);
 }
 
+// Hardened Interaction Dispatcher
+client.on('interactionCreate', async (interaction) => {
+  if (interaction.isChatInputCommand()) {
+    const command = client.commands.get(interaction.commandName);
+    if (!command) {
+      console.error(`[INTERACTION ERROR] No handler found for /${interaction.commandName}`);
+      return;
+    }
+
+    try {
+      await command.execute(interaction);
+    } catch (error) {
+      console.error(`[EXECUTION ERROR] Exception running /${interaction.commandName}:`, error);
+
+      const errorMessage = {
+        content: 'There was an error while executing this command.',
+        ephemeral: true,
+      };
+
+      if (interaction.deferred || interaction.replied) {
+        await interaction.followUp(errorMessage).catch(() => {});
+      } else {
+        await interaction.reply(errorMessage).catch(() => {});
+      }
+    }
+    return;
+  }
+
+  // Modals & Buttons handling
+  try {
+    if (interaction.isModalSubmit()) {
+      if (
+        interaction.customId === 'modal_connect' ||
+        interaction.customId === 'connect_modal'
+      ) {
+        const { handleConnectModalSubmit } = require('./handlers/connectHandler');
+        await handleConnectModalSubmit(interaction);
+        return;
+      }
+    }
+
+    if (interaction.isButton()) {
+      if (
+        interaction.customId.startsWith('collab_connect_') ||
+        interaction.customId.startsWith('connect_builder_')
+      ) {
+        const { handleConnectButton } = require('./handlers/connectHandler');
+        await handleConnectButton(interaction);
+        return;
+      }
+
+      if (
+        interaction.customId === 'btn_about_commands' ||
+        interaction.customId === 'btn_about_stack'
+      ) {
+        const { handleAboutButtons } = require('./commands/aboutgoku');
+        await handleAboutButtons(interaction);
+        return;
+      }
+    }
+  } catch (error) {
+    console.error('[INTERACTION ERROR] Component interaction error:', error);
+  }
+});
+
 // Register Commands & Purge Duplicate Guild Registrations on Startup
 client.once(Events.ClientReady, () => {
   console.log(`[GOKU OS] Bot logged in successfully as ${client.user.tag}`);
