@@ -23,8 +23,13 @@ async function dispatchNewsToTargetChannel(client, embed) {
 
     // Verify write permissions
     const permissions = channel.permissionsFor(client.user);
-    if (!permissions || !permissions.has(['ViewChannel', 'SendMessages', 'EmbedLinks'])) {
-      console.error(`[AI RADAR ERROR] Missing ViewChannel, SendMessages, or EmbedLinks permissions in channel ${targetChannelId}.`);
+    const required = ['ViewChannel', 'SendMessages', 'EmbedLinks'];
+    const missing = required.filter((perm) => !permissions || !permissions.has(perm));
+    if (missing.length > 0) {
+      console.warn(
+        `[AI RADAR NOTICE] Bot lacks [${missing.join(', ')}] permissions in #${channel.name} (${targetChannelId}). ` +
+        `In read-only channels, please add a channel permission override for the GOKU role with 'Send Messages' and 'Embed Links' enabled so it can broadcast drops.`
+      );
       return;
     }
 

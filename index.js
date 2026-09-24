@@ -179,7 +179,7 @@ client.on('interactionCreate', async (interaction) => {
 });
 
 // Instant Guild Command Synchronization on Startup
-client.once('ready', async () => {
+client.once(Events.ClientReady, async () => {
   console.log(`[GOKU OS] Bot logged in as ${client.user.tag}`);
   console.log(`[GOKU OS] System online as ${client.user.tag}. Ready to process interactions.`);
 
