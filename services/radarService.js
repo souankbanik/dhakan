@@ -869,9 +869,12 @@ async function fetchRedditChatter(mockChildren) {
   }
 
   for (const sub of REDDIT_SUBREDDITS) {
+    let handled = false;
+
+    // Strategy 1: Attempt hot.json endpoint
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const timeout = setTimeout(() => controller.abort(), 4000);
 
       const res = await fetch(`https://www.reddit.com/r/${sub}/hot.json?limit=25`, {
         headers: {
@@ -936,13 +939,22 @@ async function fetchRedditChatter(mockChildren) {
             specs: specs || 'General Discussion',
           });
         }
-      } else {
-        // Fallback to Reddit RSS if JSON 403s
-        const rssCtrl = new AbortController();
-        const rssTimeout = setTimeout(() => rssCtrl.abort(), 8000);
+        handled = true;
+      }
+    } catch {
+      // hot.json timed out or 403d; fall through to Strategy 2 (RSS)
+    }
 
-        const rssRes = await fetch(`https://www.reddit.com/r/${sub}/hot.rss`, {
-          headers: { 'User-Agent': 'GOKU-Radar/2.0 (by master pusher)' },
+    // Strategy 2: Fallback to RSS feed if hot.json was blocked/timed out
+    if (!handled) {
+      try {
+        const rssCtrl = new AbortController();
+        const rssTimeout = setTimeout(() => rssCtrl.abort(), 4000);
+
+        const rssRes = await fetch(`https://www.reddit.com/r/${sub}/.rss?sort=hot`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+          },
           signal: rssCtrl.signal,
         });
         clearTimeout(rssTimeout);
@@ -999,10 +1011,13 @@ async function fetchRedditChatter(mockChildren) {
               specs: specs || 'General Discussion',
             });
           }
+          handled = true;
+        } else {
+          console.log(`[RADAR] r/${sub} feed returned HTTP ${rssRes.status} (rate-limited by Reddit)`);
         }
+      } catch (rssErr) {
+        console.log(`[RADAR] r/${sub} feed temporarily skipped: ${rssErr.message}`);
       }
-    } catch (err) {
-      console.warn(`[RADAR REDDIT ERROR] Failed to fetch r/${sub}:`, err.message);
     }
   }
 
