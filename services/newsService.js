@@ -45,20 +45,14 @@ async function dispatchNewsToTargetChannel(client, embed) {
  * @param {import('discord.js').Client} client - The Discord Client instance.
  */
 async function fetchAndDispatchLatestNews(client) {
-  const drops = await radarService.getLatestDrops();
-  let unposted = await radarService.getUnpostedDrops();
-
-  // If all drops were already posted, use the freshest drop for startup verification
-  if (unposted.length === 0 && drops.length > 0) {
-    unposted = [drops[0]];
-  }
+  const unposted = await radarService.getUnpostedDrops();
 
   if (unposted.length === 0) {
-    console.log('[AI RADAR] No news drops available to dispatch.');
+    console.log('[AI RADAR] No new news drops available to dispatch.');
     return;
   }
 
-  // Dispatch the latest news item
+  // Dispatch the latest unposted news item
   const drop = unposted[0];
   const embed = radarService.buildRadarEmbed(drop);
 
